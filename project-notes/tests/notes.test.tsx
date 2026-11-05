@@ -31,12 +31,13 @@ type Disk = {
   shell: string[]
   clipboardExit: number
   opened: string[]
+  panesError: string | null
 }
 
 /** A repo at `C:/ws/app` and a plain folder at `C:/ws`, with an in-memory disk. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stubEngine = (on: any, cwd = 'C:/ws/app'): Disk => {
-  const disk: Disk = { files: new Map(), filled: [], store: new Map(), shell: [], clipboardExit: 0, opened: [] }
+  const disk: Disk = { files: new Map(), filled: [], store: new Map(), shell: [], clipboardExit: 0, opened: [], panesError: null }
   on('session.root', () => ({ value: cwd }))
   on('session.cwd', () => ({ value: cwd }))
   on('session.usage', () => ({ value: { context: { tokens: 1, window: 100, percent: 1 } } }))
@@ -71,7 +72,10 @@ const stubEngine = (on: any, cwd = 'C:/ws/app'): Disk => {
       { name: 'plain', kind: 'dir', size: 0, mtimeMs: 0, isLink: false },
     ],
   }))
-  on('ui.panes', () => ({ value: [] }))
+  on('ui.panes', () => {
+    if (disk.panesError !== null) throw new Error(disk.panesError)
+    return { value: [] }
+  })
   on('ui.open', (_: unknown, e: any) => {
     disk.opened.push(e.id)
     return { value: { isPlaced: true } }
@@ -413,4 +417,13 @@ test('the save hint sits beside Paste image and follows an edit', async ($, on) 
   await ui.press({ key: 'edit:a' })
   expect((await ui.find({ type: 'Text', text: /update/ }))?.text).toBe('⏎ update')
   await ui.unmount()
+})
+
+test('/notes says why when its pane will not open', async ($, on) => {
+  const disk = stubEngine(on)
+  disk.panesError = 'no room'
+  await $.session.start({ cwd: 'C:/ws/app', surface: 'terminal', isInteractive: true })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const answer = await ($ as any).command.run({ command: 'notes' })
+  expect(answer.text).toContain('Could not open the Notes pane')
 })

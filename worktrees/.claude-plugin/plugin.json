@@ -1,6 +1,6 @@
 {
   "name": "worktrees",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A pane to inspect, merge and clean up a repo's worktrees, with diffs and last activity.",
   "author": {
     "name": "Nicholas Chieppa"

@@ -135,8 +135,12 @@ async function pressCleanup($: EngineInterface, root: string, w: Worktree): Prom
 
 export const registerBranchPane = (on: Parameters<Register>[0]): void => {
   on('command.run', { command: COMMAND }, async $ => {
-    await openBranchPane($, null)
-    return { text: 'Worktrees pane opened.' }
+    try {
+      await openBranchPane($, null)
+      return { text: 'Worktrees pane opened.' }
+    } catch (error) {
+      return { text: `Could not open the Worktrees pane: ${error instanceof Error ? error.message : String(error)}` }
+    }
   })
 
   on('ui.press', { plugin: 'project-status', element: 'branch' }, async ($, e, next) => {

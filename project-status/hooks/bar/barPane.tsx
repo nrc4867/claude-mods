@@ -51,6 +51,12 @@ async function addCommand($: EngineInterface): Promise<void> {
   await update($, commandDraft, () => '')
 }
 
+/** Opens the settings pane with the keyboard. */
+export async function openBarSettings($: EngineInterface): Promise<void> {
+  await update($, notice, () => null)
+  await $.ui.open({ id: PANE_ID, title: BAR_PANE_TITLE, focus: true })
+}
+
 const handlersFor = ($: EngineInterface): BarSettingsHandlers => {
   const quietly = (work: Promise<unknown>): void => void work.catch(() => undefined)
   return {
@@ -65,9 +71,12 @@ const handlersFor = ($: EngineInterface): BarSettingsHandlers => {
 
 export const registerBarPane = (on: Parameters<Register>[0]): void => {
   on('command.run', { command: COMMAND }, async $ => {
-    await update($, notice, () => null)
-    await $.ui.open({ id: PANE_ID, title: BAR_PANE_TITLE, focus: true })
-    return { text: 'Status bar settings opened.' }
+    try {
+      await openBarSettings($)
+      return { text: 'Status bar settings opened.' }
+    } catch (error) {
+      return { text: `Could not open the status bar settings: ${error instanceof Error ? error.message : String(error)}` }
+    }
   })
 
   // Any mod's write of its `statusBar` value reaches every plugin's hook here; the rest pass through.

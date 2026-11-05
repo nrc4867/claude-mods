@@ -37,11 +37,11 @@ const PANE = {
 const DEPLOY = { kind: 'command', title: 'deploy', command: 'deploy', args: 'staging', isHidden: false }
 const DEPLOY_KEY = 'item:command:deploy staging'
 
-type World = { store: Map<string, unknown>; ran: unknown[] }
+type World = { store: Map<string, unknown>; ran: unknown[]; openError: string | null; opened: string[] }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stubEngine = (on: any): World => {
-  const world: World = { store: new Map(), ran: [] }
+  const world: World = { store: new Map(), ran: [], openError: null, opened: [] }
   on('session.root', () => ({ value: 'C:/ws/app' }))
   on('session.cwd', () => ({ value: 'C:/ws/app' }))
   on('session.usage', () => ({ value: { context: { tokens: 50_000, window: 600_000, percent: 8 } } }))
@@ -53,7 +53,11 @@ const stubEngine = (on: any): World => {
     return { value: undefined }
   })
   on('ui.panes', () => ({ value: [] }))
-  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.open', (_: unknown, e: any) => {
+    if (world.openError !== null) throw new Error(world.openError)
+    world.opened.push(e.id)
+    return { value: { isPlaced: true } }
+  })
   on('command.register', () => ({ value: { command: 'x' } }))
   on('command.list', () => ({ value: [{ name: 'deploy', description: 'Deploys', source: 'plugin' }] }))
   on('command.run', (_: unknown, e: any) => {
@@ -187,6 +191,26 @@ test('separators stand only between things drawn, so none trails the bar', async
 
   expect(await separators('? for shortcuts')).toBe(5)
   expect(await separators('')).toBe(4)
+})
+
+test('a bar item for /statusbar opens the settings itself, since a mod cannot run its own command', async ($, on) => {
+  const world = stubEngine(on)
+  world.store.set(STORE_KEY, [{ kind: 'command', title: 'bar', command: 'statusbar', args: '', isHidden: false }])
+  await start($)
+  const ui = await $.ui.mount(ROW)
+
+  await ui.press({ key: 'item:command:statusbar' })
+  expect(world.ran).toEqual([])
+  expect(world.opened).toEqual(['project-status-bar'])
+  await ui.unmount()
+})
+
+test('/statusbar says why when its pane will not open', async ($, on) => {
+  const world = stubEngine(on)
+  world.openError = 'no room'
+  await start($)
+  const answer = await runCommand($, 'statusbar')
+  expect(answer.text).toContain('Could not open the status bar settings')
 })
 
 test('a published links count replaces the links label', { plugins: [OTHER_MOD] }, async ($, on) => {

@@ -1,8 +1,10 @@
 import type { EngineInterface, Register } from 'claude-code'
 import type { BarItem, BuiltinItemId, PublishedItem, PublishedItems, StatusBar } from '../types'
+import { openBarSettings } from './bar/barPane'
 import { findPublished, itemKey } from './bar/barRules'
 import { readBarItems, readPublished, runBarCommand } from './bar/barStore'
 import {
+  BAR_COMMAND,
   BRANCH_ICON,
   COMMAND_ITEM_PREFIX,
   LINKS_COMMAND,
@@ -76,7 +78,10 @@ const commandItemOf = (
     key: `${COMMAND_ITEM_PREFIX}${itemKey(item)}`,
     label: shown?.text ?? item.title,
     color: shown?.color,
-    onPress: () => void runBarCommand($, item.command, item.args),
+    onPress: () =>
+      void (item.command === BAR_COMMAND
+        ? openBarSettings($).catch(() => undefined)
+        : runBarCommand($, item.command, item.args)),
   }
 }
 

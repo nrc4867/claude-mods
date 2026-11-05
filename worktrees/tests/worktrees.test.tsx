@@ -86,7 +86,7 @@ const fakeGit = (argv: readonly string[], cwd: string): Answer => {
   return yes()
 }
 
-const stubEngine = (on: any): string[] => {
+const stubEngine = (on: any, paneError: string | null = null): string[] => {
   const ran: string[] = []
   on('session.root', () => ({ value: 'C:/ws/app' }))
   on('session.cwd', () => ({ value: 'C:/ws/app' }))
@@ -98,7 +98,10 @@ const stubEngine = (on: any): string[] => {
     ran.push(`${cwd}> ${e.argv.slice(1).join(' ')}`)
     return { value: { ...fakeGit(e.argv, cwd), stderr: '' } }
   })
-  on('ui.panes', () => ({ value: [] }))
+  on('ui.panes', () => {
+    if (paneError !== null) throw new Error(paneError)
+    return { value: [] }
+  })
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('command.register', () => ({ value: { command: 'worktrees' } }))
   on('session.start', (_: unknown, e: any) => ({ cwd: e.cwd }))
@@ -302,4 +305,12 @@ test('pressing the status bar\'s branch item opens the pane', {
   await bar.press({ key: 'branch' })
   expect(ran.some(line => line.includes('worktree list'))).toBe(true)
   await bar.unmount()
+})
+
+test('/worktrees says why when its pane will not open', async ($, on) => {
+  stubEngine(on, 'no room')
+  await $.session.start({ cwd: 'C:/ws/app', surface: 'terminal', isInteractive: true })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const answer = await ($ as any).command.run({ command: 'worktrees' })
+  expect(answer.text).toContain('Could not open the Worktrees pane')
 })

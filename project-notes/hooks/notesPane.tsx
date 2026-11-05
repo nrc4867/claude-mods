@@ -244,8 +244,12 @@ const handlersFor = ($: EngineInterface): NotesHandlers => {
 
 export const registerNotesPane = (on: Parameters<Register>[0]): void => {
   on('command.run', { command: COMMAND }, async $ => {
-    await openNotesPane($)
-    return { text: 'Notes pane opened.' }
+    try {
+      await openNotesPane($)
+      return { text: 'Notes pane opened.' }
+    } catch (error) {
+      return { text: `Could not open the Notes pane: ${messageOf(error)}` }
+    }
   })
 
   on('ui.press', { plugin: 'project-status', element: 'notes' }, async ($, e, next) => {

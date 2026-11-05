@@ -10,6 +10,8 @@ export const NOTES_LABEL = 'notes'
 /** Before a command item's key, so it cannot take a built-in's. */
 export const COMMAND_ITEM_PREFIX = 'item:'
 export const BAR_PANE_TITLE = 'Status bar'
+/** This mod's own command: a mod's `$.command.run` skips that mod's hooks, so its item opens the pane itself. */
+export const BAR_COMMAND = 'statusbar'
 /** `$.store` key holding the bar's items. */
 export const BAR_ITEMS_STORE_KEY = 'bar-items'
 /** The `$.state` key a mod writes to publish to the bar. */
