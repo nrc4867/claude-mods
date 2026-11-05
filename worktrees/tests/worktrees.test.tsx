@@ -314,3 +314,24 @@ test('/worktrees says why when its pane will not open', async ($, on) => {
   const answer = await ($ as any).command.run({ command: 'worktrees' })
   expect(answer.text).toContain('Could not open the Worktrees pane')
 })
+
+test('commits that landed with files left uncommitted are a warning, not landed', async ($, on) => {
+  const clean = STATUS['C:/ws/app-done']
+  STATUS['C:/ws/app-done'] = '## feature/done\n M src/left.ts\n?? src/new.ts\n'
+  try {
+    stubEngine(on)
+    const pane = await openPane($)
+    const row = await pane.find({ key: 'worktree:C:/ws/app-done' })
+    expect(row?.text).toContain('! uncommitted')
+    expect(row?.text).not.toContain('landed')
+
+    await pane.press({ key: 'worktree:C:/ws/app-done' })
+    const warning = await pane.find({ type: 'Text', text: /^Commits landed/ })
+    expect(warning?.text).toBe('Commits landed in main, but 2 uncommitted files have not')
+    expect(warning?.props.color).toBe('warning')
+    expect(await pane.find({ key: 'cleanup' })).toBe(undefined)
+    await pane.unmount()
+  } finally {
+    STATUS['C:/ws/app-done'] = clean as string
+  }
+})

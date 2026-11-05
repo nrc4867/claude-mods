@@ -1,4 +1,4 @@
-import type { LandedHow, Worktree } from '../types'
+import type { LandingState, Worktree } from '../types'
 
 /** What stops safe cleanup of a worktree; empty when it may go. */
 export const cleanupBlockers = (w: Worktree): string[] => [
@@ -27,9 +27,20 @@ export const conflictPrompt = (w: Worktree, base: string, files: string[]): stri
     `Rebase \`${w.branch}\` onto \`${base}\` in that worktree and resolve the conflicts, keeping the intent of both sides. Don't merge into \`${base}\`.`,
   ].join('\n')
 
-export const describeLanded =(how: LandedHow, on: string | null): string => {
-  if (how === 'merged') return `Landed: merged in ${on}`
-  if (how === 'patches') return `Landed: same patches in ${on}`
-  if (how === 'content') return `Landed: all changes in ${on}`
-  return 'Not landed'
+/** A worktree has landed only once its commits have and nothing is left uncommitted. */
+export const landingState = (w: Worktree): LandingState => {
+  if (w.landed === null) return 'not-landed'
+  return w.files.length > 0 ? 'uncommitted' : 'landed'
+}
+
+export const describeLanding = (w: Worktree): string => {
+  const state = landingState(w)
+  if (state === 'not-landed') return 'Not landed'
+  if (state === 'uncommitted') {
+    const count = w.files.length
+    return `Commits landed in ${w.landedOn}, but ${count} uncommitted ${count === 1 ? 'file has' : 'files have'} not`
+  }
+  if (w.landed === 'merged') return `Landed: merged in ${w.landedOn}`
+  if (w.landed === 'patches') return `Landed: same patches in ${w.landedOn}`
+  return `Landed: all changes in ${w.landedOn}`
 }

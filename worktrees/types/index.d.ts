@@ -7,6 +7,9 @@ export type FileChange = {
 /** How a branch's work reached a target; null when it has not. */
 export type LandedHow = 'merged' | 'patches' | 'content' | null
 
+/** Where a worktree's work stands: `uncommitted` when its commits landed but changes remain. */
+export type LandingState = 'landed' | 'uncommitted' | 'not-landed'
+
 /** What merging into the base branch would take. */
 export type MergeKind = 'none' | 'ff' | 'rebase' | 'conflicts' | 'unknown'
 

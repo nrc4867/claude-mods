@@ -3,8 +3,9 @@ import { basename, clock, elapsed } from './formatUtils'
 import {
   canMerge,
   cleanupBlockers,
-  describeLanded,
+  describeLanding,
   isMergeBlockedByChanges,
+  landingState,
 } from './worktreeRules'
 
 /** The surface's elements, as `$.ui.resolve(e)` hands them to the pane's hook. */
@@ -110,9 +111,7 @@ function details(ui: Elements, model: ViewModel, w: Worktree, handlers: ViewHand
       </Text>
       {w.activity !== null && <Text dimColor>{describeActivity(w, model.state.at)}</Text>}
       {base !== null && w.branch !== base && (
-        <Text color={w.landed === null ? 'warning' : 'success'}>
-          {describeLanded(w.landed, w.landedOn)}
-        </Text>
+        <Text color={landingState(w) === 'landed' ? 'success' : 'warning'}>{describeLanding(w)}</Text>
       )}
       <Box flexDirection="row" gap={2}>
         {mergeControl(ui, model, w, handlers)}
@@ -166,7 +165,8 @@ export function worktreeView(ui: Elements, model: ViewModel, handlers: ViewHandl
           {w.files.length > 0 && <Text color="warning"> ●{w.files.length}</Text>}
           {w.ahead > 0 && <Text color="suggestion"> ↑{w.ahead}</Text>}
           {w.behind > 0 && <Text color="error"> ↓{w.behind}</Text>}
-          {w.landed !== null && <Text color="success"> ✓ landed</Text>}
+          {landingState(w) === 'landed' && <Text color="success"> ✓ landed</Text>}
+          {landingState(w) === 'uncommitted' && <Text color="warning"> ! uncommitted</Text>}
           {w.merge === 'conflicts' && <Text color="error"> ✗ conflicts</Text>}
           {w.activity !== null && <Text dimColor> · {elapsed(w.activity.at, state.at)}</Text>}
         </Button>
