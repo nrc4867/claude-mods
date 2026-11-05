@@ -18,4 +18,5 @@ export const NOTE_IMAGE_MAX_COLUMNS = 48
 export const NOTE_IMAGE_MAX_ROWS = 16
 export const NOTE_IMAGE_CELL_ASPECT = 2
 /** PowerShell starts slowly and loads the clipboard's assemblies. */
-export const POWERSHELL_TIMEOUT_MS = 15_000
+export const IMAGE_COMMAND_TIMEOUT_MS = 15_000
+export const PLATFORM_CHECK_TIMEOUT_MS = 5000

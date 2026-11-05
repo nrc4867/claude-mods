@@ -53,7 +53,7 @@ npx --yes -p typescript tsc -p project-status
 
 The engine writes each mod's `.claude-plugin/types/` when it loads the mod, and git ignores that folder. A type check needs the mod to have loaded once.
 
-To redraw the pictures on Windows, with Pillow installed:
+To redraw the pictures, on Windows only because of its fonts, with Pillow installed:
 
 ```sh
 python tools/render_images.py
@@ -61,7 +61,7 @@ python tools/render_images.py
 
 ## Platform
 
-The mods are developed on Windows. Some features depend on it, and each mod's README names them.
+The mods are developed and run on Windows, and written to work on macOS too. So far the macOS paths have only run against simulated commands, so tell me what breaks if you try them there. `session-files` and `project-notes` name what differs in their READMEs.
 
 ## License
 

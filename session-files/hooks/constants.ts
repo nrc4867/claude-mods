@@ -54,12 +54,14 @@ export const SUMMARY_FIELDS: readonly string[] = [
   'query', 'url', 'description', 'skill', 'prompt', 'name',
 ]
 
-/**
- * The command a row's click runs, the file's absolute path appended. The
- * JetBrains Toolbox `idea` script opens it in the running IntelliJ; `cmd /c`
- * because the script is a .cmd and processes start without a shell.
- */
-export const EDITOR_ARGV: readonly string[] = ['cmd', '/c', 'idea']
+/** The JetBrains Toolbox script that opens a file in the running IntelliJ. */
+export const EDITOR_NAME = 'idea'
+/** On Windows the script is a .cmd, and processes start without a shell. */
+export const EDITOR_WINDOWS_PREFIX: readonly string[] = ['cmd', '/c']
+/** What opens a file in its default app when `idea` is not on the PATH. */
+export const MAC_OPENER = 'open'
+export const OTHER_OPENER = 'xdg-open'
+export const PLATFORM_CHECK_TIMEOUT_MS = 5000
 export const EDITOR_TIMEOUT_MS = 15_000
 export const EDITOR_LINE_FLAG = '--line'
 /** `cmd /c` would read these in a path as shell syntax. */

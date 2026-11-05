@@ -77,6 +77,7 @@ test('a target that is neither a file nor a URL is refused', async ($, on) => {
 
 test('a file whose name cmd would read as syntax is not handed to the editor', async ($, on) => {
   const ran: string[][] = []
+  on('env.get', (_, e) => ({ value: e.name === 'OS' ? 'Windows_NT' : undefined }))
   stubFiles(on, ['/proj/a&calc.ts'])
   on('ui.toast', () => ({ value: undefined }))
   on('process.run', (_, e) => {

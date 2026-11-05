@@ -46,7 +46,7 @@ async function isRepoFolder($: EngineInterface, dir: string): Promise<boolean> {
 /** The repos to pick from: the root's children, or its siblings when the root is a repo. */
 export async function listRepoChoices($: EngineInterface): Promise<RepoChoice[]> {
   const root = (await $.session.root()).replace(/\\/g, '/').replace(/\/$/, '')
-  const dir = (await isRepoFolder($, root)) ? root.slice(0, root.lastIndexOf('/')) : root
+  const dir = (await isRepoFolder($, root)) ? root.slice(0, root.lastIndexOf('/')) || '/' : root
   const folders = (await $.fs.list(dir))
     .filter(entry => entry.kind === 'dir' && !entry.name.startsWith('.'))
     .map(entry => ({ name: entry.name, path: `${dir}/${entry.name}` }))

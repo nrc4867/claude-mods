@@ -124,3 +124,18 @@ test('a background session links its job folder; any other session has no job li
   expect(link?.props.label).toBe('job f63bb273')
   await within.unmount()
 })
+
+test('the transcript links from a Mac\'s home folder', async ($, on) => {
+  on('session.id', () => ({ value: 'abcdef12-3456' }))
+  on('session.root', () => ({ value: '/Users/me/my app' }))
+  on('env.get', (_, e) => ({ value: e.name === 'HOME' ? '/Users/me' : undefined }))
+  on('fs.stat', (_, e) => {
+    const isTranscript = e.path.replace(/^[A-Za-z]:/, '').replace(/\\/g, '/') === '/Users/me/.claude/projects/-Users-me-my-app/abcdef12-3456.jsonl'
+    return { value: { kind: isTranscript ? 'file' : 'other', size: 1, mtimeMs: 0, isLink: false } }
+  })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  const link = await ui.find({ type: 'Link' })
+  expect(link?.props.href).toBe('file:///Users/me/.claude/projects/-Users-me-my-app/abcdef12-3456.jsonl')
+  await ui.unmount()
+})

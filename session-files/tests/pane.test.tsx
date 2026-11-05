@@ -77,6 +77,7 @@ test('pressing a section header collapses and expands it', async ($, on) => {
 
 test('clicking a row opens that file in the editor', async ($, on) => {
   const ran: string[][] = []
+  on('env.get', (_, e) => ({ value: e.name === 'OS' ? 'Windows_NT' : undefined }))
   on('session.root', () => ({ value: '/proj' }))
   on('fs.read', () => ({ value: 'x\n' }))
   on('tool.call', () => ({ result: {} }))
@@ -105,4 +106,28 @@ test('an empty session says so in each section', async $ => {
   expect((await ui.find({ type: 'Text', text: /No reads/ }))?.text?.trim()).toBe('No reads yet.')
   expect((await ui.find({ type: 'Text', text: /No tool calls/ }))?.text?.trim()).toBe('No tool calls yet.')
   await ui.unmount()
+})
+
+test('on a Mac a row runs idea directly, and opens the file\'s default app when idea is missing', async ($, on) => {
+  const ran: string[][] = []
+  on('env.get', () => ({ value: undefined }))
+  on('session.root', () => ({ value: '/proj' }))
+  on('fs.read', () => ({ value: 'x\n' }))
+  on('tool.call', () => ({ result: {} }))
+  on('process.run', (_, e) => {
+    ran.push([...e.argv])
+    if (e.argv[0] === 'uname') return { value: { ...PROCESS_OK, stdout: 'Darwin\n' } }
+    return { value: e.argv[0] === 'idea' ? { ...PROCESS_OK, exitCode: 127 } : PROCESS_OK }
+  })
+
+  await $.tool.call({ tool: 'Write', file_path: '/proj/src/a.ts', content: 'x' })
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  await ui.press({ key: 'open:src/a.ts' })
+  await ui.unmount()
+
+  expect(ran).toEqual([
+    ['idea', '/proj/src/a.ts'],
+    ['uname', '-s'],
+    ['open', '/proj/src/a.ts'],
+  ])
 })

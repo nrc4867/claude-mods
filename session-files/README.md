@@ -26,9 +26,10 @@ The row shows the last 15 lines of output, with `Stop`, `Copy` and `Copy output`
 
 ## Platform
 
-- Files open with IntelliJ's `idea` command, which needs to be on your `PATH`.
-- Commands run with Git Bash on Windows.
-- On Windows, `Stop` may not end processes the command started.
+- **Windows and macOS** are both supported. The macOS paths have only run against simulated commands so far.
+- **Opening files:** files open with IntelliJ's `idea` command. On macOS, if `idea` isn't on your `PATH`, the file opens in its default app instead, without jumping to a line.
+- **Running commands:** commands run in bash, which on Windows means Git Bash.
+- **`Stop`:** on Windows, it may not end processes the command started.
 
 ## License
 

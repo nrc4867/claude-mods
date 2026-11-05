@@ -1,6 +1,6 @@
 {
   "name": "session-files",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Panes for this session: what Claude did (files written, read and tools run) and Links, the files and URLs it flagged or mentioned.",
   "author": {
     "name": "Nicholas Chieppa"

@@ -1,6 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 import { repoName } from '../hooks/notesFile'
 import { clipboardScript, imageCells, parseImageSize, psQuote } from '../hooks/notesImages'
+import { parseSipsSize } from '../hooks/notesMacClipboard'
 import { droppedImages, parseNotes, promptText, removeImage } from '../hooks/notesRules'
 
 const PLUGIN = 'project-notes'
@@ -32,16 +33,29 @@ type Disk = {
   clipboardExit: number
   opened: string[]
   panesError: string | null
+  platform: 'windows' | 'mac'
+  macClipboard: string
 }
 
 /** A repo at `C:/ws/app` and a plain folder at `C:/ws`, with an in-memory disk. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stubEngine = (on: any, cwd = 'C:/ws/app'): Disk => {
-  const disk: Disk = { files: new Map(), filled: [], store: new Map(), shell: [], clipboardExit: 0, opened: [], panesError: null }
+  const disk: Disk = { files: new Map(), filled: [], store: new Map(), shell: [], clipboardExit: 0, opened: [], panesError: null, platform: 'windows', macClipboard: 'saved' }
   on('session.root', () => ({ value: cwd }))
   on('session.cwd', () => ({ value: cwd }))
   on('session.usage', () => ({ value: { context: { tokens: 1, window: 100, percent: 1 } } }))
+  on('env.get', (_: unknown, e: any) => ({
+    value: e.name === 'OS' && disk.platform === 'windows' ? 'Windows_NT' : undefined,
+  }))
   on('process.run', (_: unknown, e: any) => {
+    const ok = (stdout = '') => ({ value: { exitCode: 0, stdout, stderr: '' } })
+    if (e.argv[0] === 'uname') return ok('Darwin\n')
+    if (['mkdir', 'rm', 'open', 'sips', 'osascript'].includes(e.argv[0])) {
+      disk.shell.push(e.argv.join(' '))
+      if (e.argv[0] === 'osascript') return ok(`${disk.macClipboard}\n`)
+      if (e.argv.includes('pixelWidth')) return ok('/x.png\n  pixelWidth: 800\n  pixelHeight: 400\n')
+      return ok()
+    }
     if (e.argv[0] === 'powershell.exe') {
       disk.shell.push(e.argv.at(-1))
       const isPaste = e.argv.at(-1).includes('Clipboard')
@@ -426,4 +440,54 @@ test('/notes says why when its pane will not open', async ($, on) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const answer = await ($ as any).command.run({ command: 'notes' })
   expect(answer.text).toContain('Could not open the Notes pane')
+})
+
+test('sips output is read into a size', () => {
+  expect(parseSipsSize('/a/b.png\n  pixelWidth: 800\n  pixelHeight: 400\n')).toEqual({ width: 800, height: 400 })
+  expect(parseSipsSize('')).toBe(null)
+})
+
+test('on a Mac a picture on the clipboard is saved through osascript and sized with sips', async ($, on) => {
+  const disk = stubEngine(on)
+  disk.platform = 'mac'
+  const ui = await openPane($)
+  await ui.press({ key: 'paste-image' })
+
+  const [pending] = disk.store.get(PENDING_KEY) as { file: string; width: number; height: number }[]
+  expect(pending?.width).toBe(800)
+  expect(pending?.height).toBe(400)
+  expect(disk.shell[0]).toContain('mkdir -p')
+  expect(disk.shell[1]).toContain('osascript')
+  expect(disk.shell[1]?.endsWith(`claude-project-notes-images/${pending?.file}`)).toBe(true)
+  expect(disk.shell.some(line => line.startsWith('powershell'))).toBe(false)
+  await ui.unmount()
+})
+
+test('on a Mac a copied picture file is converted, and an empty clipboard says so', async ($, on) => {
+  const disk = stubEngine(on)
+  disk.platform = 'mac'
+  disk.macClipboard = 'file:/Users/me/shot.jpg'
+  const ui = await openPane($)
+  await ui.press({ key: 'paste-image' })
+  expect(disk.shell.some(line => line.startsWith('sips -s format png /Users/me/shot.jpg'))).toBe(true)
+  expect((disk.store.get(PENDING_KEY) as unknown[]).length).toBe(1)
+
+  disk.macClipboard = 'none'
+  await ui.press({ key: 'paste-image' })
+  expect((await ui.find({ type: 'Text', text: /No image/ }))?.text).toBe('No image on the clipboard')
+  expect((disk.store.get(PENDING_KEY) as unknown[]).length).toBe(1)
+  await ui.unmount()
+})
+
+test('on a Mac pictures open with open and go with rm', async ($, on) => {
+  const disk = stubEngine(on)
+  disk.platform = 'mac'
+  disk.files.set(FILE, JSON.stringify({ notes: [{ id: 'a', text: 'x', images: [IMAGE], at: 1, addedAt: null }] }))
+  const ui = await openPane($)
+  await ui.press({ key: 'open:5.png' })
+  expect(disk.shell.at(-1)).toBe(`open ${GIT_DIR}/claude-project-notes-images/5.png`)
+  await ui.press({ key: 'delete:a' })
+  await ui.press({ key: 'delete:a' })
+  expect(disk.shell.at(-1)).toBe(`rm -f -- ${GIT_DIR}/claude-project-notes-images/5.png`)
+  await ui.unmount()
 })

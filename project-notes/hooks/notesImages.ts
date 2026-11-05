@@ -1,11 +1,13 @@
 import type { EngineInterface } from 'claude-code'
 import type { NoteImage } from '../types'
 import {
+  IMAGE_COMMAND_TIMEOUT_MS,
   NOTE_IMAGE_CELL_ASPECT,
   NOTE_IMAGE_MAX_COLUMNS,
   NOTE_IMAGE_MAX_ROWS,
-  POWERSHELL_TIMEOUT_MS,
 } from './constants'
+import { saveMacClipboardImage } from './notesMacClipboard'
+import { hostPlatform } from './platform'
 
 /** The clipboard script's exit when it holds no picture. */
 const NO_IMAGE_EXIT = 3
@@ -47,14 +49,21 @@ export const imageCells = (image: NoteImage, available: number): { columns: numb
 
 async function runPowerShell($: EngineInterface, script: string) {
   return $.process.run(['powershell.exe', '-NoProfile', '-NonInteractive', '-STA', '-Command', script], {
-    timeoutMs: POWERSHELL_TIMEOUT_MS,
+    timeoutMs: IMAGE_COMMAND_TIMEOUT_MS,
   })
 }
 
 /** Saves the clipboard's picture under `dir`; null when it holds none. */
 export async function saveClipboardImage($: EngineInterface, dir: string, at: number): Promise<NoteImage | null> {
   const file = `${at}.png`
-  const { exitCode, stdout } = await runPowerShell($, clipboardScript(dir, `${dir}/${file}`))
+  const path = `${dir}/${file}`
+  const platform = await hostPlatform($)
+  if (platform === 'other') throw new Error('Paste image needs Windows or macOS')
+  if (platform === 'mac') {
+    const size = await saveMacClipboardImage($, dir, path)
+    return size === null ? null : { file, ...size }
+  }
+  const { exitCode, stdout } = await runPowerShell($, clipboardScript(dir, path))
   if (exitCode === NO_IMAGE_EXIT) return null
   const size = parseImageSize(stdout)
   if (exitCode !== 0 || size === null) throw new Error('Could not read the clipboard')
@@ -64,12 +73,19 @@ export async function saveClipboardImage($: EngineInterface, dir: string, at: nu
 /** Removes the files; one that will not go is left behind, no note names it. */
 export async function removeImageFiles($: EngineInterface, paths: readonly string[]): Promise<void> {
   if (paths.length === 0) return
-  const list = paths.map(psQuote).join(',')
-  await runPowerShell($, `Remove-Item -LiteralPath ${list} -Force -ErrorAction SilentlyContinue`).catch(() => undefined)
+  const remove =
+    (await hostPlatform($)) === 'windows'
+      ? runPowerShell($, `Remove-Item -LiteralPath ${paths.map(psQuote).join(',')} -Force -ErrorAction SilentlyContinue`)
+      : $.process.run(['rm', '-f', '--', ...paths], { timeoutMs: IMAGE_COMMAND_TIMEOUT_MS })
+  await remove.catch(() => undefined)
 }
 
 /** Opens the picture in the person's image viewer. */
 export async function openImageFile($: EngineInterface, path: string): Promise<void> {
-  const { exitCode } = await runPowerShell($, `Invoke-Item -LiteralPath ${psQuote(path)}`)
+  const platform = await hostPlatform($)
+  const { exitCode } =
+    platform === 'windows'
+      ? await runPowerShell($, `Invoke-Item -LiteralPath ${psQuote(path)}`)
+      : await $.process.run([platform === 'mac' ? 'open' : 'xdg-open', path], { timeoutMs: IMAGE_COMMAND_TIMEOUT_MS })
   if (exitCode !== 0) throw new Error(`Could not open ${path}`)
 }

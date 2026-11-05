@@ -22,7 +22,7 @@ With `project-status` installed, the status row shows how many notes are waiting
 
 ## Platform
 
-`Paste image`, `Open image` and removing pictures run `powershell.exe`, so they need Windows. Pictures are drawn only in the terminal, and only if it can show images. The mobile app has no text fields, so there you can read and send notes but not write or edit them.
+Pictures work on Windows, through PowerShell, and on macOS, through `osascript` and `sips`. The macOS paths have only run against simulated commands so far. On other systems, `Paste image` says it needs one of those two. Pictures are drawn only in the terminal, and only if it can show images. The mobile app has no text fields, so there you can read and send notes but not write or edit them.
 
 ## License
 
