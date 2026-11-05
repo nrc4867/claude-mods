@@ -4,15 +4,18 @@ export const ACTION_TIMEOUT_MS = 60_000
 export const BRANCH_ICON = '⎇'
 export const SEPARATOR = ' · '
 
-/** Button keys other mods hook `ui.press` on to open their panes. */
-export const PROJECT_KEY = 'project'
-export const BRANCH_KEY = 'branch'
-export const CONTEXT_KEY = 'context'
-export const TOOLS_KEY = 'tools'
-export const LINKS_KEY = 'links'
+/** The bar's links item shows what session-files publishes for this command. */
+export const LINKS_COMMAND = 'links'
 export const LINKS_LABEL = 'links'
-export const NOTES_KEY = 'notes'
 export const NOTES_LABEL = 'notes'
+/** Before a command item's key, so it cannot take a built-in's. */
+export const COMMAND_ITEM_PREFIX = 'item:'
+export const BAR_PANE_TITLE = 'Status bar'
+/** `$.store` key holding the bar's items. */
+export const BAR_ITEMS_STORE_KEY = 'bar-items'
+/** The `$.state` key a mod writes to publish to the bar. */
+export const STATUS_BAR_STATE_KEY = 'statusBar'
+export const PUBLISHED_TEXT_MAX = 40
 export const NOTES_PANE_TITLE = 'Notes'
 /** Kept in the repo's shared git folder: every worktree reads it and git never tracks it. */
 export const NOTES_FILE_NAME = 'claude-project-notes.json'

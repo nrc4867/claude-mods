@@ -6,7 +6,7 @@ Claude Code mods that add panes, status items and guardrails to the terminal int
 
 | Mod | Adds | Commands |
 | --- | --- | --- |
-| [project-status](project-status/README.md) | A clickable status row, a worktree manager and per-repo notes | `/worktrees`, `/notes` |
+| [project-status](project-status/README.md) | A clickable status row, a worktree manager and per-repo notes | `/statusbar`, `/worktrees`, `/notes` |
 | [session-files](session-files/README.md) | Files and tools used this session, plus links and commands Claude leaves for you | `/files`, `/links` |
 | [context-breakdown](context-breakdown/README.md) | Context window and plan usage, with a link to the session and its job folder | `/ctx` |
 | [repo-dashboard](repo-dashboard/README.md) | Git status of every repo beside the current project | `/repos` |

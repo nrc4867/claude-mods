@@ -81,6 +81,8 @@ declare module 'claude-code' {
       calls: Shaped<ToolRun[]>
       sections: Shaped<SectionsOpen>
       links: Shaped<SessionLink[]>
+      /** What the status bar shows for this mod's commands. */
+      statusBar: Record<string, { text: string }>
       /** Each attached command's latest run, by link id. */
       commandRuns: Shaped<Record<string, CommandRun>>
       /** The command link waiting for its confirming press. */

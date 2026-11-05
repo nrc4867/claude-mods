@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface } from 'claude-code'
 import type { ReadFile, SectionId, SectionsOpen, SessionLink, TouchedFile, ToolRun, ToolRunStatus } from '../types'
-import { SECTIONS_DEFAULT } from './constants'
+import { LINKS_COMMAND, SECTIONS_DEFAULT } from './constants'
 import { upsertLink } from './linkRules'
 import type { Located, Measured } from './tracker'
 import { finishRun, startRun, upsertFile, upsertRead } from './tracker'
@@ -18,6 +18,7 @@ const sections = atom({ plugin: 'session-files', key: 'sections' } as const, SEC
 })
 
 const links = atom({ plugin: 'session-files', key: 'links' } as const, [], { shape: 'links-2' })
+const statusBar = atom({ plugin: 'session-files', key: 'statusBar' } as const, {})
 
 export type Snapshot = {
   written: readonly TouchedFile[]
@@ -55,8 +56,11 @@ export async function readLinks($: EngineInterface): Promise<readonly SessionLin
   return read($, links)
 }
 
-export function storeLink($: EngineInterface, link: SessionLink): Promise<unknown> {
-  return update($, links, list => upsertLink(list, link))
+/** Publishes the count to the status bar, which reads each mod's `statusBar` value. */
+export async function storeLink($: EngineInterface, link: SessionLink): Promise<void> {
+  await update($, links, list => upsertLink(list, link))
+  const count = (await read($, links)).length
+  await update($, statusBar, () => ({ [LINKS_COMMAND]: { text: `${count} ${count === 1 ? 'link' : 'links'}` } }))
 }
 
 export function toggleSection($: EngineInterface, id: SectionId): Promise<unknown> {

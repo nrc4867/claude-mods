@@ -80,3 +80,6 @@ export const MAX_LINK_NOTE_CHARS = 200
 export const MAX_URL_CHARS = 1500
 /** References read from one reply, so a long listing cannot start hundreds of file checks. */
 export const MAX_MENTIONS_PER_REPLY = 30
+
+/** The command the status bar's links item stands for. */
+export const LINKS_COMMAND = 'links'

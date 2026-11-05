@@ -19,6 +19,32 @@ The row under the prompt shows the project, branch, context fill, tool calls thi
 
 An item whose mod isn't installed still shows, but pressing it does nothing.
 
+### Choosing what the bar shows
+
+`/statusbar` lets you reorder and hide items, and add any slash command with a title. Your choices are kept across sessions and repos.
+
+Pressing a command item runs the command as if you typed it, so it waits until Claude is idle and its output lands in the transcript, where Claude can read it. Only commands the session knows can be added, and an added command's mod has to be loaded for the press to work.
+
+### Showing live information from your own mod
+
+A command item shows its title until its mod publishes something. To publish, write a `$.state` value named `statusBar`, keyed by command name:
+
+```ts
+const statusBar = { plugin: 'my-mod', key: 'statusBar' } as const
+
+await $.state.set(statusBar, {
+  deploy: { text: '2 running', color: 'warning' },
+})
+```
+
+- **`text`** replaces the title. It's limited to one line of 40 characters.
+- **`color`** is optional: `success`, `warning`, `error` or `suggestion`. Without it, the item is dim like the others.
+- Declare `statusBar` in your mod's contract, as with any `$.state` value.
+- Each write replaces everything your mod published. Writing `{}` puts the titles back.
+- Published text lasts for the session, so write it again at `session.start` if it should show from the start.
+
+`session-files` publishes its link count this way.
+
 ## Worktrees
 
 `/worktrees` lists the repo's worktrees and other local branches.
