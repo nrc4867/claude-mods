@@ -1,0 +1,10 @@
+{
+  "name": "worktrees",
+  "version": "0.1.0",
+  "description": "A pane to inspect, merge and clean up a repo's worktrees, with diffs and last activity.",
+  "author": {
+    "name": "Nicholas Chieppa"
+  },
+  "license": "Apache-2.0",
+  "types": "./types/index.d.ts"
+}

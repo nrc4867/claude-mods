@@ -11,7 +11,7 @@ SCENES = [
         ],
     },
     {
-        "path": "project-status/docs/worktrees.png",
+        "path": "worktrees/docs/worktrees.png",
         "title": "Worktrees",
         "lines": [
             "{d:acme-api · 14:32}                         [[Repos]] [[Fetch]] [[Refresh]]",
@@ -32,7 +32,7 @@ SCENES = [
         ],
     },
     {
-        "path": "project-status/docs/notes.png",
+        "path": "project-notes/docs/notes.png",
         "title": "Notes",
         "lines": [
             "{b:acme-api} [[Repos]]",

@@ -4,6 +4,8 @@
   "metadata": { "description": "Panes, status items and guardrails for Claude Code." },
   "plugins": [
     { "name": "project-status", "source": "./project-status" },
+    { "name": "worktrees", "source": "./worktrees" },
+    { "name": "project-notes", "source": "./project-notes" },
     { "name": "session-files", "source": "./session-files" },
     { "name": "context-breakdown", "source": "./context-breakdown" },
     { "name": "repo-dashboard", "source": "./repo-dashboard" },

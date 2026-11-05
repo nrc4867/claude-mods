@@ -6,7 +6,9 @@ Claude Code mods that add panes, status items and guardrails to the terminal int
 
 | Mod | Adds | Commands |
 | --- | --- | --- |
-| [project-status](project-status/README.md) | A clickable status row, a worktree manager and per-repo notes | `/statusbar`, `/worktrees`, `/notes` |
+| [project-status](project-status/README.md) | A clickable status row you can configure | `/statusbar` |
+| [worktrees](worktrees/README.md) | Inspect, merge and clean up a repo's worktrees | `/worktrees` |
+| [project-notes](project-notes/README.md) | Notes and pictures kept with a repo, unsent until you use them | `/notes` |
 | [session-files](session-files/README.md) | Files and tools used this session, plus links and commands Claude leaves for you | `/files`, `/links` |
 | [context-breakdown](context-breakdown/README.md) | Context window and plan usage, with a link to the session and its job folder | `/ctx` |
 | [repo-dashboard](repo-dashboard/README.md) | Git status of every repo beside the current project | `/repos` |
@@ -21,6 +23,8 @@ From a shell, add this folder as a marketplace, then install the mods you want:
 ```sh
 claude plugin marketplace add C:/Users/nicho/IdeaProjects/claude-mods
 claude plugin install project-status@local-mods
+claude plugin install worktrees@local-mods
+claude plugin install project-notes@local-mods
 claude plugin install session-files@local-mods
 claude plugin install context-breakdown@local-mods
 claude plugin install repo-dashboard@local-mods

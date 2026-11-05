@@ -1,4 +1,5 @@
-import type { Note, NoteImage } from '../../types'
+import type { Note, NoteImage } from '../types'
+import { NOTES_COMMAND } from './constants'
 
 const isImage = (value: unknown): value is NoteImage => {
   const image = value as NoteImage | null
@@ -103,6 +104,6 @@ export const promptText = (notes: readonly Note[], imagesDir: string): string =>
   return notes.map(note => `- ${noteBody(note, imagesDir).replace(/\n/g, '\n  ')}\n`).join('')
 }
 
-/** The status bar's item; bare when nothing waits. */
-export const notesLabel = (count: number, bare: string): string =>
-  count === 0 ? bare : `${count} ${count === 1 ? 'note' : 'notes'}`
+/** What the status bar shows: the count of waiting notes; its own label when none wait. */
+export const statusBarValue = (count: number): Record<string, { text: string }> =>
+  count === 0 ? {} : { [NOTES_COMMAND]: { text: `${count} ${count === 1 ? 'note' : 'notes'}` } }

@@ -11,19 +11,19 @@ import { readOverview } from './worktrees'
 
 // Literals here so the engine can match the command and pane by name.
 const COMMAND = 'worktrees'
-const PANE_ID = 'project-status-branches'
+const PANE_ID = 'worktrees'
 
 const MERGE_ACTION = 'merge'
 const CLEANUP_ACTION = 'cleanup'
 
-const overview = atom({ plugin: 'project-status', key: 'overview' } as const, null, {
+const overview = atom({ plugin: 'worktrees', key: 'overview' } as const, null, {
   shape: 'overview-3',
 })
-const selected = atom({ plugin: 'project-status', key: 'selected' } as const, null)
-const repo = atom({ plugin: 'project-status', key: 'repo' } as const, null)
-const armed = atom({ plugin: 'project-status', key: 'armed' } as const, null)
-const notice = atom({ plugin: 'project-status', key: 'notice' } as const, null)
-const openDiff = atom({ plugin: 'project-status', key: 'openDiff' } as const, null, {
+const selected = atom({ plugin: 'worktrees', key: 'selected' } as const, null)
+const repo = atom({ plugin: 'worktrees', key: 'repo' } as const, null)
+const armed = atom({ plugin: 'worktrees', key: 'armed' } as const, null)
+const notice = atom({ plugin: 'worktrees', key: 'notice' } as const, null)
+const openDiff = atom({ plugin: 'worktrees', key: 'openDiff' } as const, null, {
   shape: 'diff-1',
 })
 
@@ -137,6 +137,11 @@ export const registerBranchPane = (on: Parameters<Register>[0]): void => {
   on('command.run', { command: COMMAND }, async $ => {
     await openBranchPane($, null)
     return { text: 'Worktrees pane opened.' }
+  })
+
+  on('ui.press', { plugin: 'project-status', element: 'branch' }, async ($, e, next) => {
+    await openBranchPane($, null)
+    return next(e)
   })
 
   on('ui.press', { plugin: 'repo-dashboard' }, async ($, e, next) => {

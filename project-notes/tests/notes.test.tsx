@@ -1,16 +1,16 @@
 import { expect, test } from 'claude-code/testing'
-import { repoName } from '../hooks/notes/notesFile'
-import { clipboardScript, imageCells, parseImageSize, psQuote } from '../hooks/notes/notesImages'
-import { droppedImages, parseNotes, promptText, removeImage } from '../hooks/notes/notesRules'
+import { repoName } from '../hooks/notesFile'
+import { clipboardScript, imageCells, parseImageSize, psQuote } from '../hooks/notesImages'
+import { droppedImages, parseNotes, promptText, removeImage } from '../hooks/notesRules'
 
-const PLUGIN = 'project-status'
+const PLUGIN = 'project-notes'
 const GIT_DIR = 'C:/ws/app/.git'
 const FILE = `${GIT_DIR}/claude-project-notes.json`
 
 const PANE = {
   plugin: PLUGIN,
   component: 'Pane',
-  requestId: 'project-status-notes',
+  requestId: 'project-notes',
   surface: 'terminal',
   props: {
     title: 'Notes',
@@ -30,12 +30,13 @@ type Disk = {
   store: Map<string, unknown>
   shell: string[]
   clipboardExit: number
+  opened: string[]
 }
 
 /** A repo at `C:/ws/app` and a plain folder at `C:/ws`, with an in-memory disk. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stubEngine = (on: any, cwd = 'C:/ws/app'): Disk => {
-  const disk: Disk = { files: new Map(), filled: [], store: new Map(), shell: [], clipboardExit: 0 }
+  const disk: Disk = { files: new Map(), filled: [], store: new Map(), shell: [], clipboardExit: 0, opened: [] }
   on('session.root', () => ({ value: cwd }))
   on('session.cwd', () => ({ value: cwd }))
   on('session.usage', () => ({ value: { context: { tokens: 1, window: 100, percent: 1 } } }))
@@ -71,7 +72,10 @@ const stubEngine = (on: any, cwd = 'C:/ws/app'): Disk => {
     ],
   }))
   on('ui.panes', () => ({ value: [] }))
-  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.open', (_: unknown, e: any) => {
+    disk.opened.push(e.id)
+    return { value: { isPlaced: true } }
+  })
   on('prompt.fill', (_: unknown, e: any) => {
     disk.filled.push(e.text)
     return { isFilled: true }
@@ -214,23 +218,51 @@ test('from a folder of repos the pane offers them and remembers the pick', async
   await ui.unmount()
 })
 
-test('the status bar counts the notes waiting', async ($, on) => {
+test('the count of waiting notes is published for the status bar', async ($, on) => {
   const disk = stubEngine(on)
-  disk.files.set(FILE, JSON.stringify({ notes: [{ id: 'a', text: 'one', at: 1, addedAt: null }] }))
-  on('ui.render', { component: 'PromptHint' }, ($: any, e: any) => {
-    const { Text } = $.ui.resolve(e)
-    return <Text>{e.props.hint}</Text>
+  disk.files.set(
+    FILE,
+    JSON.stringify({
+      notes: [
+        { id: 'a', text: 'one', at: 1, addedAt: null },
+        { id: 'b', text: 'used', at: 1, addedAt: 2 },
+      ],
+    }),
+  )
+  const published: unknown[] = []
+  on('state.set', ($: unknown, e: any, next: any) => {
+    if (e.key === 'statusBar') published.push(e.value)
+    return next(e)
   })
   await $.session.start({ cwd: 'C:/ws/app', surface: 'terminal', isInteractive: true })
-  const ui = await $.ui.mount({
-    plugin: PLUGIN,
+  expect(published.at(-1)).toEqual({ notes: { text: '1 note' } })
+})
+
+test('pressing the status bar\'s notes item opens the pane', {
+  plugins: [{
+    name: 'project-status',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    register: (on: any) => {
+      on('ui.render', { component: 'PromptHint' }, ($: any, e: any) => {
+        const { Button } = $.ui.resolve(e)
+        return <Button key="notes" label="notes" onPress={() => undefined} />
+      })
+    },
+  }],
+}, async ($, on) => {
+  const disk = stubEngine(on)
+  await $.session.start({ cwd: 'C:/ws/app', surface: 'terminal', isInteractive: true })
+  const bar = await $.ui.mount({
+    plugin: 'project-status',
     component: 'PromptHint',
     requestId: 'hint',
     surface: 'terminal',
-    props: { isDraft: false, isWorking: false, hint: '?' },
+    props: { isDraft: false, isWorking: false, hint: '' },
   })
-  expect((await ui.find({ key: 'notes' }))?.text).toBe('1 note')
-  await ui.unmount()
+  expect(disk.opened).toEqual([])
+  await bar.press({ key: 'notes' })
+  expect(disk.opened).toEqual(['project-notes'])
+  await bar.unmount()
 })
 
 const IMAGE = { file: '5.png', width: 800, height: 400 }

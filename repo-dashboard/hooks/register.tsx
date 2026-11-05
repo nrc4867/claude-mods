@@ -36,7 +36,7 @@ const nameCell = (name: string, isCurrent: boolean): string => {
   return `${isCurrent ? '▸ ' : '  '}${fitted}`
 }
 
-/** The project-status mod answers a press on a repo row with its Worktrees pane. */
+/** The worktrees mod answers a press on a repo row with its Worktrees pane. */
 const answeredElsewhere = (): void => undefined
 
 export const register: Register = on => {
@@ -59,7 +59,7 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('ui.press', { plugin: 'project-status', element: 'repos' }, async ($, e, next) => {
+  on('ui.press', { plugin: 'worktrees', element: 'repos' }, async ($, e, next) => {
     const panes = await $.ui.panes()
     if (panes.some(p => p.id === PANE_ID && !p.isShown)) await $.ui.close({ id: PANE_ID })
     await $.ui.open({ id: PANE_ID, title: PANE_TITLE })

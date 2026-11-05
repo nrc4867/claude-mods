@@ -2,15 +2,20 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { BarItem, BuiltinItemId, PublishedItem, PublishedItems, StatusBar } from '../types'
 import { findPublished, itemKey } from './bar/barRules'
 import { readBarItems, readPublished, runBarCommand } from './bar/barStore'
-import { openBranchPane } from './branchPane'
-import { BRANCH_ICON, COMMAND_ITEM_PREFIX, LINKS_COMMAND, LINKS_LABEL, NOTES_LABEL, SEPARATOR } from './constants'
-import { openNotesPane, readWaitingCount } from './notes/notesPane'
-import { notesLabel } from './notes/notesRules'
+import {
+  BRANCH_ICON,
+  COMMAND_ITEM_PREFIX,
+  LINKS_COMMAND,
+  LINKS_LABEL,
+  NOTES_COMMAND,
+  NOTES_LABEL,
+  SEPARATOR,
+} from './constants'
 import { readBar, readToolCount } from './statusBar'
 
 const toolsLabel = (count: number): string => `${count} ${count === 1 ? 'tool' : 'tools'}`
 
-/** The project, context, tools and links items are answered by the mods that own those panes. */
+/** The built-in items are answered by the mods that own their panes, which hook `ui.press` on these keys. */
 const answeredElsewhere = (): void => undefined
 
 type DrawnItem = {
@@ -20,13 +25,22 @@ type DrawnItem = {
   onPress: () => void
 }
 
+/** A built-in showing what its mod published, else its own label. */
+const publishedItem = (
+  key: BuiltinItemId,
+  byPlugin: Readonly<Record<string, PublishedItems>>,
+  command: string,
+  label: string,
+): DrawnItem => {
+  const shown = findPublished(byPlugin, command)
+  return { key, label: shown?.text ?? label, color: shown?.color, onPress: answeredElsewhere }
+}
+
 /** A built-in as it stands now; null when it has nothing to show. */
 const builtinItem = (
-  $: EngineInterface,
   id: BuiltinItemId,
   values: StatusBar,
   tools: number,
-  notes: number,
   byPlugin: Readonly<Record<string, PublishedItems>>,
 ): DrawnItem | null => {
   switch (id) {
@@ -38,22 +52,16 @@ const builtinItem = (
         : {
             key: id,
             label: `${BRANCH_ICON} ${values.branch}`,
-            onPress: () => void openBranchPane($, null).catch(() => undefined),
+            onPress: answeredElsewhere,
           }
     case 'context':
       return values.context === null ? null : { key: id, label: values.context, onPress: answeredElsewhere }
     case 'tools':
       return { key: id, label: toolsLabel(tools), onPress: answeredElsewhere }
-    case 'links': {
-      const shown = findPublished(byPlugin, LINKS_COMMAND)
-      return { key: id, label: shown?.text ?? LINKS_LABEL, color: shown?.color, onPress: answeredElsewhere }
-    }
+    case 'links':
+      return publishedItem(id, byPlugin, LINKS_COMMAND, LINKS_LABEL)
     case 'notes':
-      return {
-        key: id,
-        label: notesLabel(notes, NOTES_LABEL),
-        onPress: () => void openNotesPane($).catch(() => undefined),
-      }
+      return publishedItem(id, byPlugin, NOTES_COMMAND, NOTES_LABEL)
   }
 }
 
@@ -77,7 +85,6 @@ export const registerStatusRow = (on: Parameters<Register>[0]): void => {
     const hint = await next(e)
     const values = await readBar($)
     const tools = await readToolCount($)
-    const notes = await readWaitingCount($)
     const items = await readBarItems($)
     const byPlugin = await readPublished($)
     if (values === null) return hint
@@ -88,7 +95,7 @@ export const registerStatusRow = (on: Parameters<Register>[0]): void => {
       .filter(item => !item.isHidden)
       .flatMap(item =>
         (item.kind === 'builtin'
-          ? builtinItem($, item.id, values, tools, notes, byPlugin)
+          ? builtinItem(item.id, values, tools, byPlugin)
           : commandItemOf($, item, byPlugin)) ?? [],
       )
 

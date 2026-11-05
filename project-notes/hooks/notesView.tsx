@@ -1,7 +1,7 @@
 import type { Elements as SurfaceElements } from 'claude-code'
-import type { Note, NoteImage, Notice, NotesModel, RepoChoice } from '../../types'
-import { NOTES_FIELD_HINT, NOTES_SAVE_HINT, NOTES_UPDATE_HINT } from '../constants'
-import { elapsed } from '../formatUtils'
+import type { Note, NoteImage, Notice, NotesModel, RepoChoice } from '../types'
+import { NOTES_FIELD_HINT, NOTES_SAVE_HINT, NOTES_UPDATE_HINT } from './constants'
+import { elapsed } from './formatUtils'
 import { imageCells } from './notesImages'
 import { waitingNotes } from './notesRules'
 

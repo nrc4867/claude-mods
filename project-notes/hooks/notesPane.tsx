@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
-import type { Note, NoteImage, NotesModel, NotesRepo, RepoChoice } from '../../types'
-import { NOTES_PANE_TITLE, NOTES_PENDING_PREFIX, NOTES_STORE_PREFIX } from '../constants'
+import type { Note, NoteImage, NotesModel, NotesRepo, RepoChoice } from '../types'
+import { NOTES_PANE_TITLE, NOTES_PENDING_PREFIX, NOTES_STORE_PREFIX } from './constants'
 import { openImageFile, removeImageFiles, saveClipboardImage } from './notesImages'
 import { listRepoChoices, readNotes, resolveNotesRepo, writeNotes } from './notesFile'
 import {
@@ -15,6 +15,7 @@ import {
   removeAdded,
   removeImage,
   removeNote,
+  statusBarValue,
   waitingNotes,
 } from './notesRules'
 import { CLEAR_ADDED, imageArmKey, notesView, repoPicker } from './notesView'
@@ -22,17 +23,18 @@ import type { NotesHandlers } from './notesView'
 
 // Literals here so the engine can match the command and pane by name.
 const COMMAND = 'notes'
-const PANE_ID = 'project-status-notes'
+const PANE_ID = 'project-notes'
 
-const model = atom({ plugin: 'project-status', key: 'notesModel' } as const, null, {
+const model = atom({ plugin: 'project-notes', key: 'notesModel' } as const, null, {
   shape: 'notes-3',
 })
-const pickedRepo = atom({ plugin: 'project-status', key: 'notesRepo' } as const, null)
-const choices = atom({ plugin: 'project-status', key: 'notesChoices' } as const, null)
-const draft = atom({ plugin: 'project-status', key: 'notesDraft' } as const, '')
-const editing = atom({ plugin: 'project-status', key: 'notesEditing' } as const, null)
-const armed = atom({ plugin: 'project-status', key: 'notesArmed' } as const, null)
-const notice = atom({ plugin: 'project-status', key: 'notesNotice' } as const, null)
+const pickedRepo = atom({ plugin: 'project-notes', key: 'notesRepo' } as const, null)
+const choices = atom({ plugin: 'project-notes', key: 'notesChoices' } as const, null)
+const draft = atom({ plugin: 'project-notes', key: 'notesDraft' } as const, '')
+const editing = atom({ plugin: 'project-notes', key: 'notesEditing' } as const, null)
+const armed = atom({ plugin: 'project-notes', key: 'notesArmed' } as const, null)
+const notice = atom({ plugin: 'project-notes', key: 'notesNotice' } as const, null)
+const statusBar = atom({ plugin: 'project-notes', key: 'statusBar' } as const, {})
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error))
 
@@ -65,12 +67,7 @@ export async function refreshNotes($: EngineInterface): Promise<void> {
     at: Date.now(),
   }
   await update($, model, () => next)
-}
-
-/** How many notes wait to be used, for the status bar. */
-export async function readWaitingCount($: EngineInterface): Promise<number> {
-  const current = await read($, model)
-  return current === null ? 0 : waitingNotes(current.notes).length
+  await update($, statusBar, () => statusBarValue(waitingNotes(next.notes).length))
 }
 
 /** Opens the pane with the keyboard; a tab behind another comes forward. */
@@ -249,6 +246,11 @@ export const registerNotesPane = (on: Parameters<Register>[0]): void => {
   on('command.run', { command: COMMAND }, async $ => {
     await openNotesPane($)
     return { text: 'Notes pane opened.' }
+  })
+
+  on('ui.press', { plugin: 'project-status', element: 'notes' }, async ($, e, next) => {
+    await openNotesPane($)
+    return next(e)
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE_ID }, async ($, e) => {

@@ -1,8 +1,8 @@
 import type { EngineInterface } from 'claude-code'
-import type { Note, NotesRepo, RepoChoice } from '../../types'
-import { NOTES_FILE_NAME, NOTES_IMAGES_DIR } from '../constants'
-import { basename } from '../formatUtils'
-import { gitOut } from '../gitRun'
+import type { Note, NotesRepo, RepoChoice } from '../types'
+import { NOTES_FILE_NAME, NOTES_IMAGES_DIR } from './constants'
+import { basename } from './formatUtils'
+import { gitOut } from './gitRun'
 import { parseNotes, serializeNotes } from './notesRules'
 
 const GIT_DIR_SUFFIX = /[\\/]\.git$/

@@ -1,11 +1,11 @@
 import type { EngineInterface } from 'claude-code'
-import type { NoteImage } from '../../types'
+import type { NoteImage } from '../types'
 import {
   NOTE_IMAGE_CELL_ASPECT,
   NOTE_IMAGE_MAX_COLUMNS,
   NOTE_IMAGE_MAX_ROWS,
   POWERSHELL_TIMEOUT_MS,
-} from '../constants'
+} from './constants'
 
 /** The clipboard script's exit when it holds no picture. */
 const NO_IMAGE_EXIT = 3
