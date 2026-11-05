@@ -1,6 +1,6 @@
 {
   "name": "project-status",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "A configurable, clickable status row: the project, git branch, context fill and any slash command, with live text from mods that publish it.",
   "author": {
     "name": "Nicholas Chieppa"

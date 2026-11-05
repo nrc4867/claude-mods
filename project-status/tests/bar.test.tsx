@@ -189,7 +189,7 @@ test('separators stand only between things drawn, so none trails the bar', async
     return found.length
   }
 
-  expect(await separators('? for shortcuts')).toBe(5)
+  expect(await separators('? for shortcuts')).toBe(4)
   expect(await separators('')).toBe(4)
 })
 

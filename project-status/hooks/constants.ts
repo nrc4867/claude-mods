@@ -1,6 +1,8 @@
 export const GIT_TIMEOUT_MS = 5000
 export const BRANCH_ICON = '⎇'
 export const SEPARATOR = ' · '
+/** Space before the engine's hint. A margin, not a separator: the engine can report a hint it then draws blank. */
+export const HINT_MARGIN = 2
 
 /** The bar's links and notes items show what their mods publish for these commands. */
 export const LINKS_COMMAND = 'links'

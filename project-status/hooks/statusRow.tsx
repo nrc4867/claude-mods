@@ -7,6 +7,7 @@ import {
   BAR_COMMAND,
   BRANCH_ICON,
   COMMAND_ITEM_PREFIX,
+  HINT_MARGIN,
   LINKS_COMMAND,
   LINKS_LABEL,
   NOTES_COMMAND,
@@ -95,7 +96,6 @@ export const registerStatusRow = (on: Parameters<Register>[0]): void => {
     if (values === null) return hint
 
     const { Box, Button, Text } = $.ui.resolve(e)
-    const hasHint = e.props.hint.trim() !== ''
     const drawn = items
       .filter(item => !item.isHidden)
       .flatMap(item =>
@@ -120,12 +120,7 @@ export const registerStatusRow = (on: Parameters<Register>[0]): void => {
             </Button>
           ),
         ])}
-        {hasHint && drawn.length > 0 && (
-          <Text key="before-hint" dimColor>
-            {SEPARATOR}
-          </Text>
-        )}
-        {hint}
+        <Box marginLeft={HINT_MARGIN}>{hint}</Box>
       </Box>
     )
   })
