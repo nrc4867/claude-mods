@@ -1,0 +1,10 @@
+{
+  "name": "repo-dashboard",
+  "version": "0.1.0",
+  "description": "A pane showing branch, uncommitted changes and ahead/behind for every git repo beside the current project.",
+  "author": {
+    "name": "Nicholas Chieppa"
+  },
+  "license": "Apache-2.0",
+  "types": "./types/index.d.ts"
+}

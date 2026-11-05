@@ -1,0 +1,10 @@
+{
+  "name": "context-breakdown",
+  "version": "0.2.0",
+  "description": "A pane breaking the context window down by category, memory file, MCP server and skills, refreshed each turn.",
+  "author": {
+    "name": "Nicholas Chieppa"
+  },
+  "license": "Apache-2.0",
+  "types": "./types/index.d.ts"
+}

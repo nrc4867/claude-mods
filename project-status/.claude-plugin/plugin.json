@@ -1,0 +1,10 @@
+{
+  "name": "project-status",
+  "version": "0.6.0",
+  "description": "A clickable status row with the project, git branch and context fill, a pane to inspect, merge and clean up a repo's worktrees, and per-repo notes kept away from the model.",
+  "author": {
+    "name": "Nicholas Chieppa"
+  },
+  "license": "Apache-2.0",
+  "types": "./types/index.d.ts"
+}

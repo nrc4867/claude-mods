@@ -1,0 +1,9 @@
+{
+  "name": "code-guardrails",
+  "version": "0.1.0",
+  "description": "Tells Claude when an edited code file passes 300 lines or a write adds history-style comments.",
+  "author": {
+    "name": "Nicholas Chieppa"
+  },
+  "license": "Apache-2.0"
+}
