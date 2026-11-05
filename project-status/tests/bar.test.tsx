@@ -37,11 +37,13 @@ const PANE = {
 const DEPLOY = { kind: 'command', title: 'deploy', command: 'deploy', args: 'staging', isHidden: false }
 const DEPLOY_KEY = 'item:command:deploy staging'
 
-type World = { store: Map<string, unknown>; ran: unknown[]; openError: string | null; opened: string[] }
+const ALL_COMMANDS = ['repos', 'worktrees', 'ctx', 'files', 'links', 'notes', 'statusbar', 'deploy']
+
+type World = { store: Map<string, unknown>; ran: unknown[]; openError: string | null; opened: string[]; commands: string[] }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stubEngine = (on: any): World => {
-  const world: World = { store: new Map(), ran: [], openError: null, opened: [] }
+  const world: World = { store: new Map(), ran: [], openError: null, opened: [], commands: [...ALL_COMMANDS] }
   on('session.root', () => ({ value: 'C:/ws/app' }))
   on('session.cwd', () => ({ value: 'C:/ws/app' }))
   on('session.usage', () => ({ value: { context: { tokens: 50_000, window: 600_000, percent: 8 } } }))
@@ -59,7 +61,9 @@ const stubEngine = (on: any): World => {
     return { value: { isPlaced: true } }
   })
   on('command.register', () => ({ value: { command: 'x' } }))
-  on('command.list', () => ({ value: [{ name: 'deploy', description: 'Deploys', source: 'plugin' }] }))
+  on('command.list', () => ({
+    value: world.commands.map(name => ({ name, description: name, source: 'plugin' })),
+  }))
   on('command.run', (_: unknown, e: any) => {
     world.ran.push({ command: e.command, args: e.args })
     return { text: 'ran' }
@@ -203,6 +207,41 @@ test('a bar item for /statusbar opens the settings itself, since a mod cannot ru
   expect(world.ran).toEqual([])
   expect(world.opened).toEqual(['project-status-bar'])
   await ui.unmount()
+})
+
+test('an item whose mod is not installed leaves the bar and the settings, then returns with it', async ($, on) => {
+  const world = stubEngine(on)
+  world.commands = ['statusbar', 'ctx']
+  world.store.set(STORE_KEY, [DEPLOY])
+  await start($)
+  const bar = await $.ui.mount(ROW)
+
+  expect((await bar.find({ key: 'context' }))?.text).toBe('ctx 8% (50k/600k)')
+  for (const key of ['project', 'tools', 'links', 'notes', DEPLOY_KEY]) {
+    expect(await bar.find({ key })).toBe(undefined)
+  }
+  await bar.unmount()
+
+  await runCommand($, 'statusbar')
+  const pane = await $.ui.mount(PANE)
+  expect(await pane.find({ key: 'hide:context' })).not.toBe(undefined)
+  expect(await pane.find({ key: 'hide:links' })).toBe(undefined)
+  expect(await pane.find({ key: 'hide:command:deploy staging' })).toBe(undefined)
+  await pane.unmount()
+
+  world.commands = [...ALL_COMMANDS]
+  await runCommand($, 'statusbar')
+  const again = await $.ui.mount(PANE)
+  expect(await again.find({ key: 'hide:links' })).not.toBe(undefined)
+  await again.unmount()
+})
+
+test('a step past items of mods not installed still moves the item', () => {
+  const items = defaultItems()
+  const shown = (item: Parameters<typeof itemKey>[0]) => ['project', 'notes'].includes(itemKey(item))
+  expect(moveItem(items, 'project', 1, shown).map(itemKey).slice(-2)).toEqual(['notes', 'project'])
+  expect(moveItem(items, 'notes', -1, shown).map(itemKey).slice(0, 2)).toEqual(['notes', 'project'])
+  expect(moveItem(items, 'notes', 1, shown)).toEqual(items)
 })
 
 test('/statusbar says why when its pane will not open', async ($, on) => {

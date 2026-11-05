@@ -3,8 +3,8 @@ import type { EngineInterface, Register } from 'claude-code'
 import { BAR_PANE_TITLE, STATUS_BAR_STATE_KEY } from '../constants'
 import { barSettingsView } from './barSettingsView'
 import type { BarSettingsHandlers } from './barSettingsView'
-import { commandItem, itemKey, moveItem, parseCommandLine, removeItem, toggleHidden } from './barRules'
-import { changeBarItems, readBarItems, recordPublished } from './barStore'
+import { commandItem, isAvailable, itemKey, moveItem, parseCommandLine, removeItem, toggleHidden } from './barRules'
+import { changeBarItems, readBarItems, readKnownCommands, recordPublished, refreshKnownCommands } from './barStore'
 
 // Literals here so the engine can match the command and pane by name.
 const COMMAND = 'statusbar'
@@ -54,13 +54,19 @@ async function addCommand($: EngineInterface): Promise<void> {
 /** Opens the settings pane with the keyboard. */
 export async function openBarSettings($: EngineInterface): Promise<void> {
   await update($, notice, () => null)
+  await refreshKnownCommands($).catch(() => undefined)
   await $.ui.open({ id: PANE_ID, title: BAR_PANE_TITLE, focus: true })
 }
 
 const handlersFor = ($: EngineInterface): BarSettingsHandlers => {
   const quietly = (work: Promise<unknown>): void => void work.catch(() => undefined)
   return {
-    move: (key, delta) => quietly(change($, items => moveItem(items, key, delta))),
+    move: (key, delta) =>
+      quietly(
+        readKnownCommands($).then(known =>
+          change($, items => moveItem(items, key, delta, item => isAvailable(item, known))),
+        ),
+      ),
     toggleHidden: key => quietly(change($, items => toggleHidden(items, key))),
     remove: key => quietly(change($, items => removeItem(items, key))),
     titleChanged: text => quietly(update($, titleDraft, () => text)),
@@ -90,10 +96,11 @@ export const registerBarPane = (on: Parameters<Register>[0]): void => {
   on('ui.render', { component: 'Pane', requestId: PANE_ID }, async ($, e) => {
     const table = $.ui.resolve(e)
     const { Box, Button, Text } = table
+    const known = await readKnownCommands($)
     return barSettingsView(
       { Box, Button, Text, Input: 'Input' in table ? table.Input : null },
       {
-        items: await readBarItems($),
+        items: (await readBarItems($)).filter(item => isAvailable(item, known)),
         title: await read($, titleDraft),
         command: await read($, commandDraft),
         notice: await read($, notice),

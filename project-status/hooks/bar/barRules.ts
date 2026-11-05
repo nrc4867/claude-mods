@@ -4,6 +4,16 @@ import { PUBLISHED_TEXT_MAX } from '../constants'
 /** Each built-in item in its default place. */
 export const BUILTIN_ITEMS: readonly BuiltinItemId[] = ['project', 'branch', 'context', 'tools', 'links', 'notes']
 
+/** The command that shows each built-in's mod is installed; pressing the item opens that mod's pane. */
+const BUILTIN_COMMANDS: Readonly<Record<BuiltinItemId, string>> = {
+  project: 'repos',
+  branch: 'worktrees',
+  context: 'ctx',
+  tools: 'files',
+  links: 'links',
+  notes: 'notes',
+}
+
 const PUBLISHED_COLORS: readonly string[] = ['success', 'warning', 'error', 'suggestion']
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f]/g
 
@@ -48,11 +58,23 @@ export const normalizeItems = (value: unknown): BarItem[] => {
   return [...items, ...missing]
 }
 
-export const moveItem = (items: readonly BarItem[], key: string, delta: number): BarItem[] => {
+/** True when the item's command exists in the session; with the commands not yet known, every item counts. */
+export const isAvailable = (item: BarItem, known: readonly string[] | null): boolean =>
+  known === null || known.includes(item.kind === 'builtin' ? BUILTIN_COMMANDS[item.id] : item.command)
+
+/** Moves the item past its next neighbour that is `shown`, so a step never looks like nothing happened. */
+export const moveItem = (
+  items: readonly BarItem[],
+  key: string,
+  delta: number,
+  shown: (item: BarItem) => boolean = () => true,
+): BarItem[] => {
   const from = items.findIndex(item => itemKey(item) === key)
-  const to = from + delta
   const moved = items[from]
-  if (moved === undefined || to < 0 || to >= items.length) return [...items]
+  if (moved === undefined) return [...items]
+  let to = from + delta
+  while (to >= 0 && to < items.length && !shown(items[to] as BarItem)) to += delta
+  if (to < 0 || to >= items.length) return [...items]
   const rest = items.filter((_, index) => index !== from)
   return [...rest.slice(0, to), moved, ...rest.slice(to)]
 }

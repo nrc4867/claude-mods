@@ -46,6 +46,8 @@ declare module 'claude-code' {
       barItems: Shaped<BarItem[]>
       /** Each mod's latest `statusBar` value, by plugin. */
       barPublished: Shaped<Record<string, PublishedItems>>
+      /** The session's slash commands; null until first read. */
+      barKnownCommands: string[] | null
       barTitleDraft: string
       barCommandDraft: string
       barNotice: Notice | null

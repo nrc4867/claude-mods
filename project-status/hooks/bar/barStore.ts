@@ -11,6 +11,19 @@ const published = atom({ plugin: 'project-status', key: 'barPublished' } as cons
   shape: 'bar-published-1',
 })
 
+const knownCommands = atom({ plugin: 'project-status', key: 'barKnownCommands' } as const, null)
+
+/** The session's slash commands; null until first read. A drawing that calls this redraws when they change. */
+export async function readKnownCommands($: EngineInterface): Promise<string[] | null> {
+  return read($, knownCommands)
+}
+
+/** Rereads which commands exist, which says which mods are installed. */
+export async function refreshKnownCommands($: EngineInterface): Promise<void> {
+  const names = (await $.command.list()).map(command => command.name)
+  await update($, knownCommands, () => names)
+}
+
 /** The bar's items in order; a drawing that calls this redraws when they change. */
 export async function readBarItems($: EngineInterface): Promise<BarItem[]> {
   return read($, items)

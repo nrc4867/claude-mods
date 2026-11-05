@@ -1,8 +1,8 @@
 import type { EngineInterface, Register } from 'claude-code'
 import type { BarItem, BuiltinItemId, PublishedItem, PublishedItems, StatusBar } from '../types'
 import { openBarSettings } from './bar/barPane'
-import { findPublished, itemKey } from './bar/barRules'
-import { readBarItems, readPublished, runBarCommand } from './bar/barStore'
+import { findPublished, isAvailable, itemKey } from './bar/barRules'
+import { readBarItems, readKnownCommands, readPublished, runBarCommand } from './bar/barStore'
 import {
   BAR_COMMAND,
   BRANCH_ICON,
@@ -93,11 +93,12 @@ export const registerStatusRow = (on: Parameters<Register>[0]): void => {
     const tools = await readToolCount($)
     const items = await readBarItems($)
     const byPlugin = await readPublished($)
+    const known = await readKnownCommands($)
     if (values === null) return hint
 
     const { Box, Button, Text } = $.ui.resolve(e)
     const drawn = items
-      .filter(item => !item.isHidden)
+      .filter(item => !item.isHidden && isAvailable(item, known))
       .flatMap(item =>
         (item.kind === 'builtin'
           ? builtinItem(item.id, values, tools, byPlugin)

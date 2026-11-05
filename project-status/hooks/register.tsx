@@ -1,6 +1,7 @@
 import type { Register } from 'claude-code'
 import { registerBarPane } from './bar/barPane'
-import { loadBarItems } from './bar/barStore'
+import { loadBarItems, refreshKnownCommands } from './bar/barStore'
+import { COMMANDS_RECHECK_MS } from './constants'
 import { countToolCall, refreshBar } from './statusBar'
 import { registerStatusRow } from './statusRow'
 
@@ -14,12 +15,16 @@ export const register: Register = on => {
     await loadBarItems($).catch(() => undefined)
     const started = await next(e)
     await refreshBar($, true)
+    await refreshKnownCommands($).catch(() => undefined)
+    // Mods loading alongside this one may list their commands only after this hook has run.
+    $.clock.after(COMMANDS_RECHECK_MS, () => void refreshKnownCommands($).catch(() => undefined))
     return started
   })
 
   on('turn.complete', async ($, e, next) => {
     const done = await next(e)
     await refreshBar($, true)
+    await refreshKnownCommands($).catch(() => undefined)
     return done
   })
 

@@ -19,3 +19,4 @@ export const BAR_ITEMS_STORE_KEY = 'bar-items'
 /** The `$.state` key a mod writes to publish to the bar. */
 export const STATUS_BAR_STATE_KEY = 'statusBar'
 export const PUBLISHED_TEXT_MAX = 40
+export const COMMANDS_RECHECK_MS = 2000

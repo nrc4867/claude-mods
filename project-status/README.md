@@ -17,7 +17,7 @@ The row under the prompt shows the project, branch, context fill, tool calls thi
 | Links | Links | `session-files` |
 | Notes | Notes | `project-notes` |
 
-An item whose mod isn't installed still shows, but pressing it does nothing.
+An item only appears, on the bar and in `/statusbar`, while the mod that answers it is installed, so with `project-status` alone the row holds only commands you added. Your order and hidden choices are kept, and an item comes back when its mod does.
 
 ### Choosing what the bar shows
 
