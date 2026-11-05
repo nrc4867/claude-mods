@@ -21,7 +21,7 @@ An item only appears, on the bar and in `/statusbar`, while the mod that answers
 
 ### Choosing what the bar shows
 
-`/statusbar` lets you reorder and hide items, and add any slash command with a title. Your choices are kept across sessions and repos.
+`/statusbar` lets you reorder and hide items, and add any slash command with a title. Your choices are kept across `/clear`, sessions and repos.
 
 Pressing a command item runs the command as if you typed it, so it waits until Claude is idle and its output lands in the transcript, where Claude can read it. Only commands the session knows can be added, and an added command's mod has to be loaded for the press to work.
 

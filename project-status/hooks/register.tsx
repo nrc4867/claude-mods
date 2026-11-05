@@ -1,9 +1,18 @@
-import type { Register } from 'claude-code'
+import type { EngineInterface, Register } from 'claude-code'
 import { registerBarPane } from './bar/barPane'
 import { loadBarItems, refreshKnownCommands } from './bar/barStore'
 import { COMMANDS_RECHECK_MS } from './constants'
 import { countToolCall, refreshBar } from './statusBar'
 import { registerStatusRow } from './statusRow'
+
+/** Fills the session's bar values, which start empty after a launch and after a `/clear`. */
+const fillBar = async ($: EngineInterface): Promise<void> => {
+  await loadBarItems($).catch(() => undefined)
+  await refreshBar($, true)
+  await refreshKnownCommands($).catch(() => undefined)
+  // Mods loading alongside this one may list their commands only after this hook has run.
+  $.clock.after(COMMANDS_RECHECK_MS, () => void refreshKnownCommands($).catch(() => undefined))
+}
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
@@ -12,14 +21,17 @@ export const register: Register = on => {
       description: 'Choose what the status bar shows: reorder, hide, or add a command',
       immediate: true,
     })
-    await loadBarItems($).catch(() => undefined)
     const started = await next(e)
-    await refreshBar($, true)
-    await refreshKnownCommands($).catch(() => undefined)
-    // Mods loading alongside this one may list their commands only after this hook has run.
-    $.clock.after(COMMANDS_RECHECK_MS, () => void refreshKnownCommands($).catch(() => undefined))
+    await fillBar($)
     return started
   })
+
+  // A `/clear` empties `$.state` and fires no `session.start`.
+  on('classic.SessionStart', async ($, e, next) => {
+    const started = await next(e)
+    if (e.source === 'clear') await fillBar($)
+    return started
+  }).catch(($, e, next) => next(e))
 
   on('turn.complete', async ($, e, next) => {
     const done = await next(e)

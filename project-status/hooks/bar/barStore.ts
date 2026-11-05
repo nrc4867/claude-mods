@@ -40,12 +40,12 @@ export async function loadBarItems($: EngineInterface): Promise<void> {
   await update($, items, () => normalizeItems(stored))
 }
 
-/** Applies a change for this session and every later one. */
+/** Applies a change to the saved bar, which another session may have changed, for this session and every later one. */
 export async function changeBarItems(
   $: EngineInterface,
   change: (current: readonly BarItem[]) => BarItem[],
 ): Promise<void> {
-  const next = change(await read($, items))
+  const next = change(normalizeItems(await $.store.get(BAR_ITEMS_STORE_KEY)))
   await update($, items, () => next)
   await $.store.set(BAR_ITEMS_STORE_KEY, next)
 }

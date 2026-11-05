@@ -69,6 +69,7 @@ const stubEngine = (on: any): World => {
     return { text: 'ran' }
   })
   on('session.start', (_: unknown, e: any) => ({ cwd: e.cwd }))
+  on('classic.SessionStart', () => ({}))
   on('ui.render', { component: 'PromptHint' }, ($: any, e: any) => {
     const { Text } = $.ui.resolve(e)
     return <Text>{e.props.hint}</Text>
@@ -283,6 +284,35 @@ test('/statusbar adds a known command and saves it for later sessions', async ($
   await $.ui.input({ plugin: PLUGIN, key: 'bar-command', text: 'deploy staging', kind: 'change' })
   await ui.press({ key: 'bar-add' })
   expect((await ui.find({ type: 'Text', text: /already/ }))?.text).toBe('/deploy is already on the bar')
+  await ui.unmount()
+})
+
+test('a /clear takes the saved bar up again', async ($, on) => {
+  const world = stubEngine(on)
+  await start($)
+  const ui = await $.ui.mount(ROW)
+  expect(await ui.find({ key: DEPLOY_KEY })).toBe(undefined)
+
+  world.store.set(STORE_KEY, [DEPLOY])
+  await $.classic.SessionStart({ source: 'startup' })
+  expect(await ui.find({ key: DEPLOY_KEY })).toBe(undefined)
+
+  await $.classic.SessionStart({ source: 'clear' })
+  expect((await ui.find({ key: DEPLOY_KEY }))?.text).toBe('deploy')
+  await ui.unmount()
+})
+
+test('a change keeps what was saved since this session read the bar', async ($, on) => {
+  const world = stubEngine(on)
+  await start($)
+  await runCommand($, 'statusbar')
+  const ui = await $.ui.mount(PANE)
+
+  world.store.set(STORE_KEY, [DEPLOY])
+  await ui.press({ key: 'hide:tools' })
+  const saved = world.store.get(STORE_KEY) as Parameters<typeof itemKey>[0][]
+  expect(saved.map(itemKey)).toContain('command:deploy staging')
+  expect(await ui.find({ key: 'remove:command:deploy staging' })).not.toBe(undefined)
   await ui.unmount()
 })
 
