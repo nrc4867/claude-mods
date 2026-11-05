@@ -18,10 +18,10 @@ The pictures are illustrations with made-up data, drawn by `tools/render_images.
 
 ## Install
 
-From a shell, add this folder as a marketplace, then install the mods you want:
+From a shell, add this repo as a marketplace, then install the mods you want:
 
 ```sh
-claude plugin marketplace add C:/Users/nicho/IdeaProjects/claude-mods
+claude plugin marketplace add nrc4867/claude-mods
 claude plugin install project-status@local-mods
 claude plugin install worktrees@local-mods
 claude plugin install project-notes@local-mods
@@ -31,9 +31,9 @@ claude plugin install repo-dashboard@local-mods
 claude plugin install code-guardrails@local-mods
 ```
 
-The mods are read from this folder. After an edit, run `/reload-plugins` in the session.
+To work on the mods, clone this repo and add your clone as the marketplace instead, by its full path. The mods are then read from that folder, so after an edit you run `/reload-plugins` in the session.
 
-To load a mod with no install, and have every save reload it, name its folder when you start Claude Code:
+To load a mod from a clone with no install, and have every save reload it, name its folder when you start Claude Code:
 
 ```sh
 claude --plugin-dir ./project-status
