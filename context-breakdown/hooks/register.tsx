@@ -5,11 +5,13 @@ import {
   LABEL_COLUMNS,
   MIN_BAR_COLUMNS,
   PANE_TITLE,
+  PLAN_SPEND_LABEL,
   TOKEN_COLUMNS,
   USAGE_ERROR_PERCENT,
   USAGE_WARN_PERCENT,
 } from './constants'
-import { bar, clock, compactTokens, duration, resetTime, usd } from './formatUtils'
+import { bar, clock, compactTokens, duration, money, resetTime, usd } from './formatUtils'
+import { readPlanSpendReading, refreshPlanSpend } from './planSpend'
 import { SessionRow } from './sessionRow'
 import { takeSnapshot } from './snapshot'
 
@@ -24,7 +26,9 @@ const snapshot = atom({ plugin: 'context-breakdown', key: 'snapshot' } as const,
   shape: 'snapshot-2',
 })
 
-async function refresh($: EngineInterface): Promise<void> {
+/** Rereads the window; the plan's spend is asked for alongside, without waiting, when stale or with `force`. */
+async function refresh($: EngineInterface, force = false): Promise<void> {
+  void refreshPlanSpend($, force).catch(() => undefined)
   const next = await takeSnapshot($)
   if (next !== null) await update($, snapshot, () => next)
 }
@@ -65,7 +69,7 @@ export const register: Register = on => {
     const { Box, Text, Button } = $.ui.resolve(e)
     const snap = await read($, snapshot)
     const session = await SessionRow($, e)
-    const onRefresh = () => void refresh($).catch(() => undefined)
+    const onRefresh = () => void refresh($, true).catch(() => undefined)
     const barWidth = Math.max(MIN_BAR_COLUMNS, e.props.bodyColumns - LABEL_COLUMNS - TOKEN_COLUMNS - 1)
 
     const row = (r: ContextRow, whole: number, key: string) => (
@@ -76,6 +80,22 @@ export const register: Register = on => {
         <Text color={r.color}>{bar(r.tokens, whole, barWidth)}</Text>
         <Box width={TOKEN_COLUMNS + 1} justifyContent="flex-end">
           <Text tabular dimColor>{compactTokens(r.tokens)}</Text>
+        </Box>
+      </Box>
+    )
+
+    const spend = (await readPlanSpendReading($))?.spend ?? null
+    const usageRow = (key: string, label: string, note: string, percent: number, figure: string) => (
+      <Box flexDirection="row" key={key}>
+        <Box width={LABEL_COLUMNS}>
+          <Text wrap="truncate-end">
+            {label}
+            <Text dimColor>{note}</Text>
+          </Text>
+        </Box>
+        <Text color={usageColor(percent)}>{bar(percent, 100, barWidth)}</Text>
+        <Box width={TOKEN_COLUMNS + 1} justifyContent="flex-end">
+          <Text tabular dimColor>{figure}</Text>
         </Box>
       </Box>
     )
@@ -115,21 +135,24 @@ export const register: Register = on => {
             {snap.costUsd !== null ? ` · ${usd(snap.costUsd)}` : ''}
           </Text>
         </Text>
-        {snap.rateLimits.length === 0 && <Text dimColor>No plan limits reported yet.</Text>}
-        {snap.rateLimits.map(l => (
-          <Box flexDirection="row" key={`limit:${l.label}`}>
-            <Box width={LABEL_COLUMNS}>
-              <Text wrap="truncate-end">
-                {l.label}
-                {l.resetsAt !== null && <Text dimColor> ↻{resetTime(l.resetsAt, snap.at)}</Text>}
-              </Text>
-            </Box>
-            <Text color={usageColor(l.percentUsed)}>{bar(l.percentUsed, 100, barWidth)}</Text>
-            <Box width={TOKEN_COLUMNS + 1} justifyContent="flex-end">
-              <Text tabular dimColor>{Math.round(l.percentUsed)}%</Text>
-            </Box>
-          </Box>
-        ))}
+        {snap.rateLimits.length === 0 && spend === null && <Text dimColor>No plan limits reported yet.</Text>}
+        {snap.rateLimits.map(l =>
+          usageRow(
+            `limit:${l.label}`,
+            l.label,
+            l.resetsAt !== null ? ` ↻${resetTime(l.resetsAt, snap.at)}` : '',
+            l.percentUsed,
+            `${Math.round(l.percentUsed)}%`,
+          ),
+        )}
+        {spend !== null &&
+          usageRow(
+            'plan-spend',
+            PLAN_SPEND_LABEL,
+            ` ${money(spend.limit, spend.currency)}`,
+            (spend.used / spend.limit) * 100,
+            money(spend.used, spend.currency),
+          )}
 
         <Text bold>{'\n'}Window</Text>
         {snap.categories.map(c => row(c, snap.maxTokens, `cat:${c.name}`))}

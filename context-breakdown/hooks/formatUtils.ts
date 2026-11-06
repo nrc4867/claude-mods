@@ -1,4 +1,4 @@
-import { BAR_EMPTY, BAR_FULL, SAME_DAY_MS } from './constants'
+import { BAR_EMPTY, BAR_FULL, DEFAULT_CURRENCY, SAME_DAY_MS, WHOLE_UNITS_FROM } from './constants'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
@@ -33,3 +33,9 @@ export const duration = (ms: number): string => {
 }
 
 export const usd = (n: number): string => `$${n.toFixed(2)}`
+
+/** "$271.40", "$1250", "EUR 12.00". */
+export const money = (n: number, currency: string): string => {
+  const figure = n >= WHOLE_UNITS_FROM ? `${Math.round(n)}` : n.toFixed(2)
+  return currency === DEFAULT_CURRENCY ? `$${figure}` : `${currency} ${figure}`
+}

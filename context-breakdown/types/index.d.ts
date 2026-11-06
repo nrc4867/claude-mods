@@ -37,8 +37,26 @@ export type ContextSnapshot = {
   at: number
 }
 
+/** The plan's spend this billing period against the limit set on it. */
+export type PlanSpend = {
+  used: number
+  limit: number
+  /** ISO 4217 code: "USD". */
+  currency: string
+}
+
+export type PlanSpendReading = {
+  /** Null when the plan has no spend limit. */
+  spend: PlanSpend | null
+  /** Epoch ms of the last ask, answered or not. */
+  at: number
+}
+
 declare module 'claude-code' {
   interface PluginState {
-    'context-breakdown': { snapshot: Shaped<ContextSnapshot | null> }
+    'context-breakdown': {
+      snapshot: Shaped<ContextSnapshot | null>
+      planSpend: Shaped<PlanSpendReading | null>
+    }
   }
 }
