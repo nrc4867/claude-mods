@@ -1,0 +1,10 @@
+{
+  "name": "project-artifacts",
+  "version": "0.1.0",
+  "description": "The claude.ai artifacts that belong to a repo, with their open comments.",
+  "author": {
+    "name": "Nicholas Chieppa"
+  },
+  "license": "Apache-2.0",
+  "types": "./types/index.d.ts"
+}

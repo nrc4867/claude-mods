@@ -12,6 +12,7 @@ Claude Code mods that add panes, status items and guardrails to the terminal int
 | [session-files](session-files/README.md) | Files and tools used this session, plus links and commands Claude leaves for you | `/files`, `/links` |
 | [context-breakdown](context-breakdown/README.md) | Context window and plan usage, with a link to the session and its job folder | `/ctx` |
 | [repo-dashboard](repo-dashboard/README.md) | Git status of every repo beside the current project | `/repos` |
+| [project-artifacts](project-artifacts/README.md) | Your claude.ai artifacts under the repos they belong to, with open comments | `/repo-artifacts` |
 | [code-guardrails](code-guardrails/README.md) | Tells Claude when a file grows too long or a comment narrates history | None |
 
 The pictures are illustrations with made-up data, drawn by `tools/render_images.py`. The real panes follow your terminal's theme.
@@ -28,6 +29,7 @@ claude plugin install project-notes@local-mods
 claude plugin install session-files@local-mods
 claude plugin install context-breakdown@local-mods
 claude plugin install repo-dashboard@local-mods
+claude plugin install project-artifacts@local-mods
 claude plugin install code-guardrails@local-mods
 ```
 
