@@ -1,6 +1,7 @@
 import type { EngineInterface, Register, ToolCallResult } from 'claude-code'
 import { fileLengthNote } from './fileLength'
 import { historyCommentNote } from './historyComments'
+import { testAntiPatternNote } from './testAntiPatterns'
 
 async function withNotes(
   $: EngineInterface,
@@ -12,6 +13,7 @@ async function withNotes(
 
   const notes = [
     historyCommentNote(filePath, added),
+    testAntiPatternNote(filePath, added),
     await fileLengthNote($, filePath).catch(() => undefined),
   ].filter((n): n is string => n !== undefined)
 

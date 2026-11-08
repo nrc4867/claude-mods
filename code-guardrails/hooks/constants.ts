@@ -33,3 +33,35 @@ export const HISTORY_PATTERNS: readonly RegExp[] = [
 
 /** Comment openers across the languages in CODE_EXTENSIONS; group 1 is the comment text. */
 export const COMMENT_PATTERN = /(?:\/\/|\/\*|^\s*\*|^\s*#|<!--|--\s)(.*)$/
+
+/** Path pieces that mark a file as a test, across the build layouts in use. */
+export const TEST_PATH_PATTERNS: readonly RegExp[] = [
+  /[\/](?:test|tests|__tests__|testFixtures|[a-z]+Test)[\/]/,
+  /(?:Test|Tests|Spec)\.(?:kt|kts|java|cs)$/,
+  /\.(?:test|spec)\.[cm]?[jt]sx?$/,
+  /(?:^|[\/])test_[^\/]+\.py$|_test\.(?:py|go)$/,
+]
+
+/** A test anti-pattern: what to look for in added code and what to say about it. */
+export interface TestAntiPattern {
+  readonly pattern: RegExp
+  readonly label: string
+}
+
+/** Waits on the wall clock, which flake on slow machines and hide state the test should observe. */
+export const TIMED_WAIT_PATTERNS: readonly TestAntiPattern[] = [
+  { pattern: /\bThread\.[Ss]leep\s*\(/, label: 'Thread.sleep' },
+  { pattern: /(?<![.\w])delay\s*\(/, label: 'delay' },
+  { pattern: /\bwaitUntil\s*\(/, label: 'waitUntil' },
+  { pattern: /\b(?:time|asyncio)\.sleep\s*\(|\btime\.Sleep\s*\(|\bthread::sleep\s*\(/, label: 'sleep' },
+  { pattern: /\bTask\.Delay\s*\(/, label: 'Task.Delay' },
+  { pattern: /new Promise\s*\(\s*\(?\s*\w+\s*\)?\s*=>\s*setTimeout\b/, label: 'setTimeout promise' },
+]
+
+/** Reflection that opens up members the code keeps private. */
+export const REFLECTION_PATTERNS: readonly TestAntiPattern[] = [
+  { pattern: /\b(?:setAccessible|trySetAccessible)\s*\(/, label: 'setAccessible' },
+  { pattern: /\bisAccessible\s*=\s*true\b/, label: 'isAccessible = true' },
+  { pattern: /\bgetDeclared(?:Field|Method|Constructor)s?\s*\(/, label: 'getDeclared…' },
+  { pattern: /\bBindingFlags\.NonPublic\b/, label: 'BindingFlags.NonPublic' },
+]
